@@ -1,17 +1,42 @@
-import React, {ChangeEvent, useState} from 'react'
-import {useAppSelector} from "../hook/redux";
+import React, {ChangeEvent, useEffect, useState} from 'react'
+import {useAppDispatch, useAppSelector} from "../hook/redux";
 import {IFilter} from "../models/models";
+import {airportSlice} from "../store/slices/airportSlice";
 
 export function AirportFilter() {
+    const dispatch = useAppDispatch()
     const {regions, countries, types, loading} = useAppSelector(state => state.handbook)
+    const [hasFilter, setHasFilter] = useState(false);
     const [filter, setFilter] = useState<IFilter>({
         type: '',
         country: '',
         region: '',
     })
 
+    const isFilterEnabled = () => {
+        return filter.type || filter.region || filter.country
+    }
+
+    useEffect(() => {
+        if (isFilterEnabled()) {
+            setHasFilter(true)
+        } else {
+            setHasFilter(false)
+        }
+
+        dispatch(airportSlice.actions.filter(filter))
+    }, [filter])
+
     const changeHandler = (e: ChangeEvent<HTMLSelectElement>) => {
         setFilter(prev => ({...prev, [e.target.name]: e.target.value}))
+    }
+
+    const clearFilter = () => {
+        setFilter({
+            type: '',
+            country: '',
+            region: '',
+        })
     }
 
     if (loading) return <p className='text-center'>Loading...</p>
@@ -35,7 +60,7 @@ export function AirportFilter() {
                 {regions.map(r => <option key={r}>{r}</option>)}
             </select>
 
-            <button className='py-1 px-4 bg-red-700 text-white'>&times;</button>
+            {hasFilter && <button className='py-1 px-4 bg-red-700 text-white' onClick={clearFilter}>&times;</button>}
         </div>
     )
 }
